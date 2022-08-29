@@ -22,9 +22,7 @@ class ArcBindInfoManager:
     @auto_rollback_error
     def get_bind_friendcode(self) -> Union[str, None]:
         bind_info = self.query.friendcode
-        if bind_info != '':
-            return bind_info
-        return None
+        return bind_info if bind_info != '' else None
 
     @retry(stop=stop_after_attempt(3), reraise=True)
     @auto_rollback_error

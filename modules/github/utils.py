@@ -18,10 +18,7 @@ def darkCheck(msg: str):
         'zhao',
         'programthink'
     ]
-    for i in blacklist:
-        if msg.find(i) > -1:
-            return True
-    return False
+    return any(i in msg for i in blacklist)
 
 
 def time_diff(time: str):
@@ -35,12 +32,12 @@ def time_diff(time: str):
     if t < 1:
         t = diff / 60 / 60
         dw = ' hour(s)'
-        if t < 1:
-            t = diff / 60
-            dw = ' minute(s)'
-            if t < 1:
-                t = diff
-                dw = ' second(s)'
+    if t < 1:
+        t = diff / 60
+        dw = ' minute(s)'
+    if t < 1:
+        t = diff
+        dw = ' second(s)'
     diff = str(int(t)) + dw
     return diff
 
@@ -58,7 +55,4 @@ async def dirty_check(text, *allowlist_check):
     if allowlist_check in allowlist:
         return False
     check = await dirty.check(text)
-    for x in check:
-        if not x['status']:
-            return True
-    return False
+    return any(not x['status'] for x in check)

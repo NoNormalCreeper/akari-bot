@@ -67,9 +67,7 @@ class MessageSession(MS):
             if send_:
                 send.append(send_)
             count += 1
-        msgIds = []
-        for x in send:
-            msgIds.append(x.message_id)
+        msgIds = [x.message_id for x in send]
         return FinishedSession(msgIds, send)
 
     async def checkPermission(self):
@@ -77,17 +75,13 @@ class MessageSession(MS):
             self.target.targetId) or self.target.senderInfo.query.isSuperUser:
             return True
         admins = [member.user.id for member in await dp.bot.get_chat_administrators(self.session.message.chat.id)]
-        if self.session.sender in admins:
-            return True
-        return False
+        return self.session.sender in admins
 
     async def checkNativePermission(self):
         if self.session.message.chat.type == 'private':
             return True
         admins = [member.user.id for member in await dp.bot.get_chat_administrators(self.session.message.chat.id)]
-        if self.session.sender in admins:
-            return True
-        return False
+        return self.session.sender in admins
 
     def asDisplay(self):
         return self.session.message.text
@@ -128,9 +122,8 @@ class FetchTarget(FT):
 
     @staticmethod
     async def fetch_target(targetId) -> Union[FetchedSession, bool]:
-        matchChannel = re.match(r'^(Telegram\|.*?)\|(.*)', targetId)
-        if matchChannel:
-            return FetchedSession(matchChannel.group(1), matchChannel.group(2))
+        if matchChannel := re.match(r'^(Telegram\|.*?)\|(.*)', targetId):
+            return FetchedSession(matchChannel[1], matchChannel[2])
         else:
             return False
 

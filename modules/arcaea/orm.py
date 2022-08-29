@@ -9,11 +9,14 @@ session = db.session
 engine = db.engine
 
 
+
+
 class ArcBindInfo(Base):
-    __tablename__ = table_prefix + 'ArcBindInfo'
+    __tablename__ = f'{table_prefix}ArcBindInfo'
     targetId = Column(String(512), primary_key=True)
     username = Column(String(512))
     friendcode = Column(String(512))
 
 
-Session.create()
+
+db.create()

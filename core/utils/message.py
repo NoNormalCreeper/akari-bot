@@ -20,14 +20,13 @@ def removeIneffectiveText(prefix: str, lst: list) -> list:
             for _ in split_list:
                 if split_list[0] == '':
                     del split_list[0]
-                if len(split_list) > 0:
-                    if split_list[-1] == '':
-                        del split_list[-1]
+                if len(split_list) > 0 and split_list[-1] == '':
+                    del split_list[-1]
             for _ in split_list:
                 if len(split_list) > 0:
                     spl0 = split_list[0]
                     if spl0.startswith(prefix) and spl0 != '':
-                        split_list[0] = re.sub(r'^' + prefix, '', split_list[0])
+                        split_list[0] = re.sub(f'^{prefix}', '', split_list[0])
             list_cache.append(x.join(split_list))
         lst = list_cache
     duplicated_list = []  # 移除重复命令
@@ -44,12 +43,8 @@ def removeDuplicateSpace(text: str) -> str:
     :param text: 字符串。
     :returns: 净化后的字符串。'''
     strip_display_space = text.split(' ')
-    display_list = []  # 清除指令中间多余的空格
-    for x in strip_display_space:
-        if x != '':
-            display_list.append(x)
-    text = ' '.join(display_list)
-    return text
+    display_list = [x for x in strip_display_space if x != '']
+    return ' '.join(display_list)
 
 
 def convertDiscordEmbed(embed: Union[DiscordEmbed, dict]) -> Embed:
@@ -79,9 +74,15 @@ def convertDiscordEmbed(embed: Union[DiscordEmbed, dict]) -> Embed:
         if 'author' in embed:
             embed_.author = embed['author']
         if 'fields' in embed:
-            fields = []
-            for field_value in embed['fields']:
-                fields.append(EmbedField(field_value['name'], field_value['value'], field_value['inline']))
+            fields = [
+                EmbedField(
+                    field_value['name'],
+                    field_value['value'],
+                    field_value['inline'],
+                )
+                for field_value in embed['fields']
+            ]
+
             embed_.fields = fields
     return embed_
 
@@ -93,30 +94,23 @@ def split_multi_arguments(lst: list):
         if len(spl) > 1:
             for y in spl:
                 index_y = spl.index(y)
-                mat = re.match(r"\((.*?)\)", y)
-                if mat:
-                    spl1 = mat.group(1).split('|')
+                if mat := re.match(r"\((.*?)\)", y):
+                    spl1 = mat[1].split('|')
                     for s in spl1:
                         cspl = spl.copy()
                         cspl.insert(index_y, s)
                         del cspl[index_y + 1]
                         new_lst.append(''.join(cspl))
+        elif mat := re.match(r"\((.*?)\)", spl[0]):
+            spl1 = mat[1].split('|')
+            new_lst.extend(iter(spl1))
         else:
-            mat = re.match(r"\((.*?)\)", spl[0])
-            if mat:
-                spl1 = mat.group(1).split('|')
-                for s in spl1:
-                    new_lst.append(s)
-            else:
-                new_lst.append(spl[0])
+            new_lst.append(spl[0])
     split_more = False
     for n in new_lst:
         if re.match(r"\((.*?)\)", n):
             split_more = True
-    if split_more:
-        return split_multi_arguments(new_lst)
-    else:
-        return list(set(new_lst))
+    return split_multi_arguments(new_lst) if split_more else list(set(new_lst))
 
 
 __all__ = ['removeDuplicateSpace', 'removeIneffectiveText', 'convertDiscordEmbed', "split_multi_arguments"]

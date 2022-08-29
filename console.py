@@ -24,7 +24,7 @@ from core.utils import init, init_async
 from core.logger import Logger
 
 EnableDirtyWordCheck.status = True
-PrivateAssets.set(os.path.abspath(os.path.dirname(__file__) + '/assets'))
+PrivateAssets.set(os.path.abspath(f'{os.path.dirname(__file__)}/assets'))
 init()
 
 
@@ -58,7 +58,7 @@ async def send_command(msg, interactions=None):
     # print(returns)
     Logger.info('----Process end----')
     usage_time = datetime.now() - time
-    Logger.info('Usage time:' + str(usage_time))
+    Logger.info(f'Usage time:{str(usage_time)}')
     return returns
 
 
@@ -94,22 +94,20 @@ async def autotest():
             included = False
             for r in returns:
                 for rr in r.value:
-                    if isinstance(rr, Plain):
-                        if rr.text.find(text) != -1:
-                            Logger.info('Found included text: ' + text)
-                            included = True
+                    if isinstance(rr, Plain) and rr.text.find(text) != -1:
+                        Logger.info(f'Found included text: {text}')
+                        included = True
             if not included:
-                Logger.error('Included text not found: ' + text)
+                Logger.error(f'Included text not found: {text}')
         for text in excluded_texts:
             excluded = False
             for r in returns:
                 for rr in r.value:
-                    if isinstance(rr, Plain):
-                        if rr.text.find(text) != -1:
-                            Logger.error('Found excluded text: ' + text)
-                            excluded = True
+                    if isinstance(rr, Plain) and rr.text.find(text) != -1:
+                        Logger.error(f'Found excluded text: {text}')
+                        excluded = True
             if not excluded:
-                Logger.info('Excluded text not found: ' + text)
+                Logger.info(f'Excluded text not found: {text}')
 
         included_elements = results.get('include_elements', [])
         excluded_elements = results.get('exclude_elements', [])
@@ -125,11 +123,11 @@ async def autotest():
                 for r in returns:
                     for rr in r.value:
                         if rr.__class__.__name__ == element:
-                            Logger.info('Found included element: ' + element)
+                            Logger.info(f'Found included element: {element}')
                             included2 = True
 
                 if not included2:
-                    Logger.error('Included element not found: ' + element)
+                    Logger.error(f'Included element not found: {element}')
 
         for element in excluded_elements:
 
@@ -138,24 +136,21 @@ async def autotest():
                 for r in returns:
                     for rr in r.value:
                         if rr.__class__.__name__ == element:
-                            Logger.error('Found excluded element: ' + element)
+                            Logger.error(f'Found excluded element: {element}')
                             excluded = True
                 if not excluded2:
-                    Logger.info('Excluded element not found: ' + element)
+                    Logger.info(f'Excluded element not found: {element}')
 
 
 if __name__ == '__main__':
     init_bot()
     loop = asyncio.get_event_loop()
     argv = sys.argv
-    autotest_ = False
-    if len(argv) > 1:
-        if argv[1] == 'autotest':
-            autotest_ = True
+    autotest_ = len(argv) > 1 and argv[1] == 'autotest'
     if not autotest_:
         loop.create_task(console_scheduler())
         loop.create_task(console_command())
-        loop.run_forever()
     else:
         loop.create_task(autotest())
-        loop.run_forever()
+
+    loop.run_forever()

@@ -62,7 +62,7 @@ async def get_url(url: str, status_code: int = False, headers: dict = None, fmt=
                     text = await req.text()
                     return text
         except asyncio.exceptions.TimeoutError:
-            raise ValueError(f'Request timeout.')
+            raise ValueError('Request timeout.')
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(3), reraise=True)
@@ -81,7 +81,7 @@ async def post_url(url: str, data: any, headers: dict = None):
             async with session.post(url, data=data, headers=headers) as req:
                 return await req.text()
         except asyncio.exceptions.TimeoutError:
-            raise ValueError(f'Request timeout.')
+            raise ValueError('Request timeout.')
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(3), reraise=True)
@@ -104,7 +104,7 @@ async def download_to_cache(url: str) -> Union[str, bool]:
                     await file.write(res)
                     return path
     except asyncio.exceptions.TimeoutError:
-        Logger.error(f'Request timeout.')
+        Logger.error('Request timeout.')
         return False
     except Exception:
         Logger.error(traceback.format_exc())

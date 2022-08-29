@@ -65,7 +65,4 @@ class DirtyWordCache:
         session.commit()
 
     def get(self):
-        if not self.need_insert:
-            return json.loads(self.query.result)
-        else:
-            return False
+        return False if self.need_insert else json.loads(self.query.result)

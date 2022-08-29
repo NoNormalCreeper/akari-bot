@@ -22,7 +22,7 @@ async def arcb30init():
         fz = zipfile.ZipFile(assets_apk, 'r')
         for file in fz.namelist():
             fz.extract(file, cache)
-    copysongpath = cache + '/assets/songs'
+    copysongpath = f'{cache}/assets/songs'
     songdirs = os.listdir(copysongpath)
     jacket_output = os.path.abspath('./cache/jacket_output/')
     if not os.path.exists(jacket_output):
@@ -32,23 +32,23 @@ async def arcb30init():
         Logger.debug(filename)
         if os.path.isdir(filename):
             file = re.sub('dl_', '', file)
-            filename_base = filename + '/base.jpg'
+            filename_base = f'{filename}/base.jpg'
             if os.path.exists(filename_base):
                 shutil.copy(filename_base, f'{jacket_output}/{file}.jpg')
-            filename_0 = filename + '/0.jpg'
+            filename_0 = f'{filename}/0.jpg'
             if os.path.exists(filename_0):
                 shutil.copy(filename_0, f'{jacket_output}/{file}_0.jpg')
-            filename_1 = filename + '/1.jpg'
+            filename_1 = f'{filename}/1.jpg'
             if os.path.exists(filename_1):
                 shutil.copy(filename_1, f'{jacket_output}/{file}_1.jpg')
-            filename_2 = filename + '/2.jpg'
+            filename_2 = f'{filename}/2.jpg'
             if os.path.exists(filename_2):
                 shutil.copy(filename_2, f'{jacket_output}/{file}_2.jpg')
-            filename_3 = filename + '/3.jpg'
+            filename_3 = f'{filename}/3.jpg'
             if os.path.exists(filename_3):
                 shutil.copy(filename_3, f'{jacket_output}/{file}_3.jpg')
 
-    shutil.copytree(jacket_output, assets + '/jacket')
+    shutil.copytree(jacket_output, f'{assets}/jacket')
     files = os.listdir(jacket_output)
     bluroutputpath = os.path.abspath('./cache/bluroutput')
     bluroutputpath_official = os.path.abspath('./cache/bluroutput_official')
@@ -73,10 +73,10 @@ async def arcb30init():
         d3.save(f'{bluroutputpath_official}/{file}')
 
     files = os.listdir(bluroutputpath)
-    b30background_imgdir = assets + '/b30background_img'
+    b30background_imgdir = f'{assets}/b30background_img'
     if not os.path.exists(b30background_imgdir):
         os.makedirs(b30background_imgdir)
-    b30background_imgdir_official = assets + '/b30background_img_official'
+    b30background_imgdir_official = f'{assets}/b30background_img_official'
     if not os.path.exists(b30background_imgdir_official):
         os.makedirs(b30background_imgdir_official)
 
@@ -90,12 +90,16 @@ async def arcb30init():
         img5 = img4.crop((0, 62, 325, 263))
         img5.save(os.path.abspath(f'{b30background_imgdir_official}/{file}'))
 
-    shutil.copytree(cache + '/assets/char', assets + '/char')
-    shutil.copytree(cache + '/assets/Fonts', assets + '/Fonts')
+    shutil.copytree(f'{cache}/assets/char', f'{assets}/char')
+    shutil.copytree(f'{cache}/assets/Fonts', f'{assets}/Fonts')
     ratings = ['0', '1', '2', '3', '4', '5', '6', '7', 'off']
-    os.mkdir(assets + f'/ptt/')
+    os.mkdir(f'{assets}/ptt/')
     for rating in ratings:
-        shutil.copy(cache + f'/assets/img/rating_{rating}.png', assets + f'/ptt/rating_{rating}.png')
+        shutil.copy(
+            f'{cache}/assets/img/rating_{rating}.png',
+            f'{assets}/ptt/rating_{rating}.png',
+        )
+
 
     worldimg = f'{cache}/assets/img/world'
     worldimglist = os.listdir(worldimg)
@@ -104,15 +108,18 @@ async def arcb30init():
     os.mkdir(world_official)
     for x in worldimglist:
         if x.find('_') == -1:
-            shutil.copy(cache + f'/assets/img/world/{x}', assets + f'/world/{x}')
-            imgw = Image.open(cache + f'/assets/img/world/{x}')
+            shutil.copy(f'{cache}/assets/img/world/{x}', f'{assets}/world/{x}')
+            imgw = Image.open(f'{cache}/assets/img/world/{x}')
             imgw1 = imgw.filter(ImageFilter.GaussianBlur(radius=40))
             imgw1.save(world_official + x)
 
     coordinate = {'left_top': [1070, 25], 'right_top': [1070, 25], 'right_bottom': [1070, 959],
                   'left_bottom': [134, 959]}
-    rotate = Rotate(Image.open(cache + '/assets/img/scenery/bg_triangle.png'), coordinate)
-    rotate.run().convert('RGBA').save(assets + '/triangle.png')
+    rotate = Rotate(
+        Image.open(f'{cache}/assets/img/scenery/bg_triangle.png'), coordinate
+    )
+
+    rotate.run().convert('RGBA').save(f'{assets}/triangle.png')
     cardoverlay = Image.open(os.path.abspath(f'{cache}/assets/layouts/mainmenu/card/card_overlay.png'))
     cropoverlay = cardoverlay.crop((56, 307, 971, 377))
     cropoverlay.save(os.path.abspath(f'{assets}/card_overlay.png'))

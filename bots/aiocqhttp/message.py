@@ -79,23 +79,19 @@ class MessageSession(MS):
 
     async def checkPermission(self):
         if self.target.targetFrom == 'QQ' \
-            or self.target.senderInfo.check_TargetAdmin(self.target.targetId) \
-            or self.target.senderInfo.query.isSuperUser:
+                or self.target.senderInfo.check_TargetAdmin(self.target.targetId) \
+                or self.target.senderInfo.query.isSuperUser:
             return True
         get_member_info = await bot.call_action('get_group_member_info', group_id=self.session.target,
                                                 user_id=self.session.sender)
-        if get_member_info['role'] in ['owner', 'admin']:
-            return True
-        return False
+        return get_member_info['role'] in ['owner', 'admin']
 
     async def checkNativePermission(self):
         if self.target.targetFrom == 'QQ':
             return True
         get_member_info = await bot.call_action('get_group_member_info', group_id=self.session.target,
                                                 user_id=self.session.sender)
-        if get_member_info['role'] in ['owner', 'admin']:
-            return True
-        return False
+        return get_member_info['role'] in ['owner', 'admin']
 
     def asDisplay(self, message=None):
         return ''.join(
@@ -124,9 +120,13 @@ class MessageSession(MS):
 
         async def __aenter__(self):
             if self.msg.target.targetFrom == 'QQ|Group':
-                if self.msg.session.sender in last_send_typing_time:
-                    if datetime.datetime.now().timestamp() - last_send_typing_time[self.msg.session.sender] <= 3600:
-                        return
+                if (
+                    self.msg.session.sender in last_send_typing_time
+                    and datetime.datetime.now().timestamp()
+                    - last_send_typing_time[self.msg.session.sender]
+                    <= 3600
+                ):
+                    return
                 last_send_typing_time[self.msg.session.sender] = datetime.datetime.now().timestamp()
                 await bot.send_group_msg(group_id=self.msg.session.target,
                                          message=f'[CQ:poke,qq={self.msg.session.sender}]')
@@ -157,41 +157,47 @@ class FetchTarget(FT):
 
     @staticmethod
     async def fetch_target(targetId) -> Union[FetchedSession, bool]:
-        matchTarget = re.match(r'^(QQ\|Group|QQ\|Guild|QQ)\|(.*)', targetId)
-        if matchTarget:
-            return FetchedSession(matchTarget.group(1), matchTarget.group(2))
+        if matchTarget := re.match(r'^(QQ\|Group|QQ\|Guild|QQ)\|(.*)', targetId):
+            return FetchedSession(matchTarget[1], matchTarget[2])
         return False
 
     @staticmethod
     async def fetch_target_list(targetList: list) -> List[FetchedSession]:
         lst = []
         group_list_raw = await bot.call_action('get_group_list')
-        group_list = []
-        for g in group_list_raw:
-            group_list.append(g['group_id'])
+        group_list = [g['group_id'] for g in group_list_raw]
         friend_list_raw = await bot.call_action('get_friend_list')
-        friend_list = []
         guild_list_raw = await bot.call_action('get_guild_list')
         guild_list = []
         for g in guild_list_raw:
             get_channel_list = await bot.call_action('get_guild_channel_list', guild_id=g['guild_id'])
-            for channel in get_channel_list:
-                if channel['channel_type'] == 1:
-                    guild_list.append(f"{str(g['guild_id'])}|{str(channel['channel_id'])}")
-        for f in friend_list_raw:
-            friend_list.append(f)
+            guild_list.extend(
+                f"{str(g['guild_id'])}|{str(channel['channel_id'])}"
+                for channel in get_channel_list
+                if channel['channel_type'] == 1
+            )
+
+        friend_list = list(friend_list_raw)
         for x in targetList:
             fet = await FetchTarget.fetch_target(x)
-            if fet:
-                if fet.target.targetFrom == 'QQ|Group':
-                    if fet.session.target not in group_list:
-                        continue
-                if fet.target.targetFrom == 'QQ':
-                    if fet.session.target not in friend_list:
-                        continue
-                if fet.target.targetFrom == 'QQ|Guild':
-                    if fet.session.target not in guild_list:
-                        continue
+            if (
+                fet
+                and (
+                    fet.target.targetFrom != 'QQ'
+                    or fet.session.target in friend_list
+                )
+                and (
+                    fet.target.targetFrom == 'QQ'
+                    or fet.target.targetFrom != 'QQ|Group'
+                    or fet.session.target in group_list
+                )
+                and (
+                    fet.target.targetFrom == 'QQ'
+                    or fet.target.targetFrom == 'QQ|Group'
+                    or fet.target.targetFrom != 'QQ|Guild'
+                    or fet.session.target in guild_list
+                )
+            ):
                 lst.append(fet)
         return lst
 
@@ -210,22 +216,21 @@ class FetchTarget(FT):
         else:
             get_target_id = BotDBUtil.Module.get_enabled_this(module_name)
             group_list_raw = await bot.call_action('get_group_list')
-            group_list = []
-            for g in group_list_raw:
-                group_list.append(g['group_id'])
+            group_list = [g['group_id'] for g in group_list_raw]
             friend_list_raw = await bot.call_action('get_friend_list')
-            friend_list = []
-            for f in friend_list_raw:
-                friend_list.append(f['user_id'])
+            friend_list = [f['user_id'] for f in friend_list_raw]
             guild_list_raw = await bot.call_action('get_guild_list')
             guild_list = []
             for g in guild_list_raw:
                 try:
                     get_channel_list = await bot.call_action('get_guild_channel_list', guild_id=g['guild_id'],
                                                              no_cache=True)
-                    for channel in get_channel_list:
-                        if channel['channel_type'] == 1:
-                            guild_list.append(f"{str(g['guild_id'])}|{str(channel['channel_id'])}")
+                    guild_list.extend(
+                        f"{str(g['guild_id'])}|{str(channel['channel_id'])}"
+                        for channel in get_channel_list
+                        if channel['channel_type'] == 1
+                    )
+
                 except Exception:
                     traceback.print_exc()
                     continue
@@ -233,13 +238,13 @@ class FetchTarget(FT):
                 fetch = await FetchTarget.fetch_target(x)
                 Logger.debug(fetch)
                 if fetch:
-                    if fetch.target.targetFrom == 'QQ|Group':
-                        if int(fetch.session.target) not in group_list:
-                            continue
                     if fetch.target.targetFrom == 'QQ':
                         if int(fetch.session.target) not in friend_list:
                             continue
-                    if fetch.target.targetFrom == 'QQ|Guild':
+                    elif fetch.target.targetFrom == 'QQ|Group':
+                        if int(fetch.session.target) not in group_list:
+                            continue
+                    elif fetch.target.targetFrom == 'QQ|Guild':
                         if fetch.session.target not in guild_list:
                             continue
                     try:

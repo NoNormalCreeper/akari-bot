@@ -34,12 +34,8 @@ def init_bot():
     cache_path = os.path.abspath(Config('cache_path'))
     if os.path.exists(cache_path):
         shutil.rmtree(cache_path)
-        os.mkdir(cache_path)
-    else:
-        os.mkdir(cache_path)
-
-    base_superuser = Config('base_superuser')
-    if base_superuser:
+    os.mkdir(cache_path)
+    if base_superuser := Config('base_superuser'):
         BotDBUtil.SenderInfo(base_superuser).edit('isSuperUser', True)
 
 
@@ -77,10 +73,7 @@ def run_bot():
         c.write('\n'.join(str(p) for p in pidlst))
 
     q = Queue()
-    threads = []
-    for p in runlst:
-        threads.append(Thread(target=enqueue_output, args=(p.stdout, q)))
-
+    threads = [Thread(target=enqueue_output, args=(p.stdout, q)) for p in runlst]
     for t in threads:
         t.daemon = True
         t.start()

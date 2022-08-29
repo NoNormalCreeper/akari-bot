@@ -28,8 +28,7 @@ async def _(msg: MessageSession):
         await msg.finish('未找到资源文件！请放置一枚arcaea的apk到机器人的assets目录并重命名为arc.apk后，使用~arcaea initialize初始化资源。')
     query_code = None
     unofficial = msg.parsed_msg.get('unofficial', False)
-    friendcode: str = msg.parsed_msg.get('<friendcode>', False)
-    if friendcode:
+    if friendcode := msg.parsed_msg.get('<friendcode>', False):
         if friendcode.isdigit():
             if len(friendcode) == 9:
                 query_code = friendcode
@@ -75,8 +74,7 @@ async def _(msg: MessageSession):
         return
     query_code = None
     unofficial = msg.parsed_msg.get('unofficial', False)
-    friendcode = msg.parsed_msg.get('<friendcode>', False)
-    if friendcode:
+    if friendcode := msg.parsed_msg.get('<friendcode>', False):
         if friendcode.isdigit():
             if len(friendcode) == 9:
                 query_code = friendcode
@@ -117,22 +115,22 @@ async def _(msg: MessageSession):
     code: str = msg.parsed_msg['<friendcode/username>']
     getcode = await get_userinfo(code)
     if getcode:
-        bind = ArcBindInfoManager(msg).set_bind_info(username=getcode[0], friendcode=getcode[1])
-        if bind:
+        if bind := ArcBindInfoManager(msg).set_bind_info(
+            username=getcode[0], friendcode=getcode[1]
+        ):
             await msg.finish(f'绑定成功：{getcode[0]}({getcode[1]})')
+    elif code.isdigit():
+        if bind := ArcBindInfoManager(msg).set_bind_info(
+            username='', friendcode=code
+        ):
+            await msg.finish('绑定成功，但是无法获取用户信息。请自行检查命令是否可用。')
     else:
-        if code.isdigit():
-            bind = ArcBindInfoManager(msg).set_bind_info(username='', friendcode=code)
-            if bind:
-                await msg.finish('绑定成功，但是无法获取用户信息。请自行检查命令是否可用。')
-        else:
-            await msg.finish('绑定失败，请尝试使用好友码绑定。')
+        await msg.finish('绑定失败，请尝试使用好友码绑定。')
 
 
 @arc.handle('unbind {取消绑定用户}')
 async def _(msg: MessageSession):
-    unbind = ArcBindInfoManager(msg).remove_bind_info()
-    if unbind:
+    if unbind := ArcBindInfoManager(msg).remove_bind_info():
         await msg.finish('取消绑定成功。')
 
 
@@ -151,8 +149,12 @@ async def _(msg: MessageSession):
 async def _(msg: MessageSession):
     if not webrender:
         await msg.finish(['未配置webrender，无法使用此命令。'])
-    resp = await get_url(webrender + 'source?url=https://webapi.lowiro.com/webapi/serve/static/bin/arcaea/apk/', 200,
-                         fmt='json')
+    resp = await get_url(
+        f'{webrender}source?url=https://webapi.lowiro.com/webapi/serve/static/bin/arcaea/apk/',
+        200,
+        fmt='json',
+    )
+
     if resp:
         await msg.finish([Plain(f'目前的最新版本为{resp["value"]["version"]}。\n下载地址：{resp["value"]["url"]}')])
 
@@ -161,7 +163,12 @@ async def _(msg: MessageSession):
 async def _(msg: MessageSession):
     if not webrender:
         await msg.finish(['未配置webrender，无法使用此命令。'])
-    resp = await get_url(webrender + 'source?url=https://webapi.lowiro.com/webapi/song/showcase/', 200, fmt='json')
+    resp = await get_url(
+        f'{webrender}source?url=https://webapi.lowiro.com/webapi/song/showcase/',
+        200,
+        fmt='json',
+    )
+
     if resp:
         value = resp["value"][0]
         image = f'{assets_path}/jacket/{value["song_id"]}.jpg'
@@ -176,13 +183,23 @@ async def _(msg: MessageSession):
     if not webrender:
         await msg.finish(['未配置webrender，无法使用此命令。'])
     if msg.parsed_msg.get('free', False):
-        resp = await get_url(webrender + 'source?url=https://webapi.lowiro.com/webapi/song/rank/free/', 200, fmt='json')
+        resp = await get_url(
+            f'{webrender}source?url=https://webapi.lowiro.com/webapi/song/rank/free/',
+            200,
+            fmt='json',
+        )
+
     else:
-        resp = await get_url(webrender + 'source?url=https://webapi.lowiro.com/webapi/song/rank/paid/', 200, fmt='json')
+        resp = await get_url(
+            f'{webrender}source?url=https://webapi.lowiro.com/webapi/song/rank/paid/',
+            200,
+            fmt='json',
+        )
+
     if resp:
-        r = []
-        rank = 0
-        for x in resp['value']:
-            rank += 1
-            r.append(f'{rank}. {x["title"]["en"]} ({x["status"]})')
+        r = [
+            f'{rank}. {x["title"]["en"]} ({x["status"]})'
+            for rank, x in enumerate(resp['value'], start=1)
+        ]
+
         await msg.finish('\n'.join(r))

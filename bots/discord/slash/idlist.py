@@ -12,13 +12,12 @@ api = 'https://ca.projectxero.top/idlist/search'
 async def auto_search(ctx: discord.AutocompleteContext):
     title = ctx.options["keywords"]
     query_options = {'q': title, 'limit': '5'}
-    query_url = api + '?' + urllib.parse.urlencode(query_options)
+    query_url = f'{api}?{urllib.parse.urlencode(query_options)}'
     resp = await get_url(query_url, 200, fmt='json')
     result_ = resp['data']['result']
     results = [title]
     if result_:
-        for x in result_:
-            results.append(f'{x["enumName"]} {x["key"]}')
+        results.extend(f'{x["enumName"]} {x["key"]}' for x in result_)
     return results
 
 

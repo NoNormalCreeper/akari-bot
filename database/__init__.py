@@ -67,7 +67,7 @@ class BotDBUtil:
             return self.enable_modules_list
 
         def check_target_enabled_module(self, module_name) -> bool:
-            return True if module_name in self.enable_modules_list else False
+            return module_name in self.enable_modules_list
 
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error
@@ -160,9 +160,7 @@ class BotDBUtil:
         @auto_rollback_error
         def check_TargetAdmin(self, targetId):
             query = session.query(TargetAdmin).filter_by(senderId=self.senderId, targetId=targetId).first()
-            if query is not None:
-                return query
-            return False
+            return query if query is not None else False
 
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error
@@ -175,8 +173,7 @@ class BotDBUtil:
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error
         def remove_TargetAdmin(self, targetId):
-            query = self.check_TargetAdmin(targetId)
-            if query:
+            if query := self.check_TargetAdmin(targetId):
                 session.delete(query)
                 session.commit()
             return True
@@ -189,14 +186,12 @@ class BotDBUtil:
             self.name = name
             self.query = session.query(CommandTriggerTime).filter_by(targetId=str(msg.target.senderId),
                                                                      commandName=name).first()
-            self.need_insert = True if self.query is None else False
+            self.need_insert = self.query is None
 
         def check(self, delay):
             if not self.need_insert:
                 now = datetime.datetime.now().timestamp() - self.query.timestamp.timestamp()
-                if now > delay:
-                    return 0
-                return now
+                return 0 if now > delay else now
             return 0
 
         @retry(stop=stop_after_attempt(3))
@@ -214,9 +209,7 @@ class BotDBUtil:
     def isGroupInAllowList(targetId):
         session.expire_all()
         query = session.query(GroupAllowList).filter_by(targetId=targetId).first()
-        if query is not None:
-            return True
-        return False
+        return query is not None
 
     class Muting:
         @retry(stop=stop_after_attempt(3))
@@ -229,9 +222,7 @@ class BotDBUtil:
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error
         def check(self):
-            if self.query is not None:
-                return True
-            return False
+            return self.query is not None
 
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error
@@ -289,15 +280,10 @@ class BotDBUtil:
         @retry(stop=stop_after_attempt(3))
         def get(self, k=None):
             query = session.query(TargetOptions).filter_by(targetId=self.targetId).first()
-            if query is None and k is None:
-                return {}
-            elif query is None and k is not None:
-                return None
+            if query is None:
+                return {} if k is None else None
             value: dict = json.loads(query.options)
-            if k is None:
-                return value
-            else:
-                return value.get(k)
+            return value if k is None else value.get(k)
 
     class Analytics:
         def __init__(self, target: Union[MessageSession, FetchedSession]):
@@ -347,10 +333,13 @@ class BotDBUtil:
             :return: True = yes, False = no
             """
             query = session.query(UnfriendlyActionsTable).filter_by(targetId=self.targetId).all()
-            unfriendly_list = []
-            for records in query:
-                if datetime.datetime.now().timestamp() - records.timestamp.timestamp() < 432000:
-                    unfriendly_list.append(records)
+            unfriendly_list = [
+                records
+                for records in query
+                if datetime.datetime.now().timestamp() - records.timestamp.timestamp()
+                < 432000
+            ]
+
             if len(unfriendly_list) > 5:
                 return True
             count = {}
@@ -360,12 +349,7 @@ class BotDBUtil:
                         count[criminal.senderId] = 0
                     else:
                         count[criminal.senderId] += 1
-            if len(count) >= 3:
-                return True
-            for convict in count:
-                if count[convict] >= 3:
-                    return True
-            return False
+            return True if len(count) >= 3 else any(value >= 3 for value in count.values())
 
         @retry(stop=stop_after_attempt(3))
         @auto_rollback_error

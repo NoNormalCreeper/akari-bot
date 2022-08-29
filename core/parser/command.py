@@ -27,8 +27,10 @@ class CommandParser:
             else:
                 help_docs[''] = {'priority': match.priority, 'meta': match}
             if match.options_desc is not None:
-                for m in match.options_desc:
-                    self.options_desc.append(f'{m}  {match.options_desc[m]}')
+                self.options_desc.extend(
+                    f'{m}  {match.options_desc[m]}' for m in match.options_desc
+                )
+
         self.args: Dict[Union[Template, ''], dict] = copy.deepcopy(help_docs)
 
     def return_formatted_help_doc(self) -> str:
@@ -39,7 +41,7 @@ class CommandParser:
         for x in format_args:
             x = f'{self.command_prefixes[0]}{self.bind_prefix} {x}'
             lst.append(x)
-        args = '\n'.join(y for y in lst)
+        args = '\n'.join(lst)
         if self.options_desc:
             args += '\n参数：\n' + '\n'.join(self.options_desc)
         return args
@@ -54,10 +56,7 @@ class CommandParser:
             split_command = command.split(' ')
         Logger.debug(split_command)
         try:
-            if not isinstance(self.origin_template, Command):
-                if len(split_command) == 1:
-                    return None, None
-            else:
+            if isinstance(self.origin_template, Command):
                 if len(split_command) == 1:
                     if '' in self.args:
                         return self.args['']['meta'], None
@@ -69,6 +68,8 @@ class CommandParser:
                     base_match = parse_argv(split_command[1:], [args for args in self.args if args != ''])
                     return self.args[base_match.original_template]['meta'], base_match.args
 
+            elif len(split_command) == 1:
+                return None, None
         except InvalidCommandFormatError:
             traceback.print_exc()
             raise InvalidCommandFormatError

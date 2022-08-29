@@ -18,15 +18,11 @@ class MessageSession(MessageSession):
         flag = asyncio.Event()
         MessageTaskManager.add_task(self, flag)
         await flag.wait()
-        result = MessageTaskManager.get_result(self)
-        if result:
-            if msgchain is not None and delete:
-                await send.delete()
-            if result.asDisplay() in confirm_command:
-                return True
-            return False
-        else:
+        if not (result := MessageTaskManager.get_result(self)):
             raise WaitCancelException
+        if msgchain is not None and delete:
+            await send.delete()
+        return result.asDisplay() in confirm_command
 
     async def waitNextMessage(self, msgchain=None, quote=True, delete=False) -> MessageSession:
         sent = None
@@ -56,8 +52,7 @@ class MessageSession(MessageSession):
         flag = asyncio.Event()
         MessageTaskManager.add_task(self, flag, reply=send.messageId)
         await flag.wait()
-        result = MessageTaskManager.get_result(self)
-        if result:
+        if result := MessageTaskManager.get_result(self):
             return result
         else:
             raise WaitCancelException
@@ -84,7 +79,7 @@ class MessageSession(MessageSession):
         await asyncio.sleep(s)
 
     def checkSuperUser(self):
-        return True if self.target.senderInfo.query.isSuperUser else False
+        return bool(self.target.senderInfo.query.isSuperUser)
 
 
 __all__ = ["MessageSession"]

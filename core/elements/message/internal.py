@@ -33,7 +33,7 @@ class Url:
     def __init__(self, url: str, use_mm: bool = False, disable_mm: bool = False):
         self.url = url
         if (Url.mm and not disable_mm) or (use_mm and not Url.disable_mm):
-            mm_url = f'https://mm.teahouse.team/?source=akaribot&rot13=%s'
+            mm_url = 'https://mm.teahouse.team/?source=akaribot&rot13=%s'
             rot13 = str.maketrans(
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
                 "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM")
@@ -48,9 +48,15 @@ class Url:
 
 class ErrorMessage:
     def __init__(self, error_message):
-        self.error_message = '发生错误：' + error_message + '\n错误汇报地址： ' + \
-                             str(Url(
-                                 'https://github.com/Teahouse-Studios/bot/issues/new?assignees=OasisAkari&labels=bug&template=report_bug.yaml&title=%5BBUG%5D%3A+'))
+        self.error_message = (
+            f'发生错误：{error_message}'
+            + '\n错误汇报地址： '
+            + str(
+                Url(
+                    'https://github.com/Teahouse-Studios/bot/issues/new?assignees=OasisAkari&labels=bug&template=report_bug.yaml&title=%5BBUG%5D%3A+'
+                )
+            )
+        )
 
     def __str__(self):
         return self.error_message
@@ -73,9 +79,7 @@ class Image:
             self.need_get = True
 
     async def get(self):
-        if self.need_get:
-            return abspath(await self.get_image())
-        return abspath(self.path)
+        return abspath(await self.get_image()) if self.need_get else abspath(self.path)
 
     @retry(stop=stop_after_attempt(3))
     async def get_image(self):
@@ -162,7 +166,7 @@ class Embed:
                 else:
                     text_lst.append(f"{f.name}:\n{f.value}")
         if self.author is not None:
-            text_lst.append("作者：" + self.author)
+            text_lst.append(f"作者：{self.author}")
         if self.footer is not None:
             text_lst.append(self.footer)
         msgchain = []

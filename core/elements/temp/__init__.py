@@ -44,7 +44,7 @@ class ExecutionLockList:
     @staticmethod
     def check(msg: MessageSession):
         targetId = msg.target.senderId
-        return True if targetId in ExecutionLockList._list else False
+        return targetId in ExecutionLockList._list
 
     @staticmethod
     def get():

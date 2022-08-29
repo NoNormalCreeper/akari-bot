@@ -26,14 +26,11 @@ async def getb30_official(usercode):
         getb30_json = await get_url(f'{apiurl}user/{usercode}/best', headers=headers, status_code=200, fmt='json')
     except Exception:
         traceback.print_exc()
-        return {'text': f'获取失败。'}
+        return {'text': '获取失败。'}
     getuserinfo = getuserinfo_json['data']
     username = getuserinfo['display_name']
     potential = getuserinfo['potential']
-    if potential is not None:
-        potential = int(potential) / 100
-    else:
-        potential = '--'
+    potential = int(potential) / 100 if potential is not None else '--'
     getb30 = getb30_json['data']
     b30potential = []
     for x in getb30:
@@ -85,7 +82,7 @@ async def getb30_official(usercode):
                 trackname = songinfo['difficulties'][x['difficulty']]['name_en']
                 realptt = songinfo['difficulties'][x['difficulty']]['rating']
                 realptts[x['song_id'] + difficulty] = realptt
-            tracknames[x['song_id'] + difficulty] = trackname + f' ({difficulty})'
+            tracknames[x['song_id'] + difficulty] = f'{trackname} ({difficulty})'
             imgpath = f'{assets_path}/b30background_img_official/{x["song_id"]}_{str(x["difficulty"])}.jpg'
             if not os.path.exists(imgpath):
                 imgpath = f'{assets_path}/b30background_img_official/{x["song_id"]}.jpg'

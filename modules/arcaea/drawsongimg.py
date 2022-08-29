@@ -38,12 +38,12 @@ def dsimg(img, rank, name, difficulty, score, ptt, realptt, pure, far, lost, pla
     if t < 1:
         t = playtime / 60 / 60
         dw = 'h'
-        if t < 1:
-            t = playtime / 60
-            dw = 'm'
-        if t < 1:
-            t = playtime
-            dw = 's'
+    if t < 1:
+        t = playtime / 60
+        dw = 'm'
+    if t < 1:
+        t = playtime
+        dw = 's'
     playtime = str(int(t)) + dw
     # drawimg
     songimg = Image.open(img).convert("RGBA")
@@ -52,16 +52,16 @@ def dsimg(img, rank, name, difficulty, score, ptt, realptt, pure, far, lost, pla
     difficultyimg = Image.open(f'{assets_path}/{difficulty}.png')
     songimg.alpha_composite(difficultyimg.convert("RGBA"), (278, 0))
     drawtext = ImageDraw.Draw(songimg)
-    drawtext.text((20, 115), '#' + str(rank), '#ffffff', font=font)
+    drawtext.text((20, 115), f'#{str(rank)}', '#ffffff', font=font)
     name_length = len(name)
     if name_length > 14:
-        name = name[0:14] + '...'
+        name = name[:14] + '...'
     drawtext.text((20, 1), name, '#ffffff', font=font)
     score = re.sub(',', "'", format(score, ','))
     score = score.split("'")
     if int(score[0]) < 10:
         score = "'".join(score)
-        score = '0' + score
+        score = f'0{score}'
     else:
         score = "'".join(score)
     drawtext.text((20, 50), f'{score}  [{scoretype}]', '#ffffff', font=font2)
@@ -78,5 +78,16 @@ def dsimg(img, rank, name, difficulty, score, ptt, realptt, pure, far, lost, pla
 
 
 if __name__ == '__main__':
-    dsimg(os.path.abspath(f'./assets/songimg/mahoroba.jpg'), '20', 'MAHOROBA', '2', 10000000, 12, 13, '999', '0', '0',
-          1601545604789)
+    dsimg(
+        os.path.abspath('./assets/songimg/mahoroba.jpg'),
+        '20',
+        'MAHOROBA',
+        '2',
+        10000000,
+        12,
+        13,
+        '999',
+        '0',
+        '0',
+        1601545604789,
+    )

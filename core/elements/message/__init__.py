@@ -242,7 +242,7 @@ class MessageSession:
         wait = ...
 
     def __str__(self):
-        return "Message(target={}, session={}, sent={})".format(self.target, self.session, self.sent)
+        return f"Message(target={self.target}, session={self.session}, sent={self.sent})"
 
 
 class FetchedSession:

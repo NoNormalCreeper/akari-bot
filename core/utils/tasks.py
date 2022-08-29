@@ -12,11 +12,13 @@ class MessageTaskManager:
         task_type = 'reply' if reply is not None else 'wait'
         if all_:
             sender = 'all'
-        if session.target.targetId in MessageTaskManager._list:
-            if sender in MessageTaskManager._list[session.target.targetId]:
-                if MessageTaskManager._list[session.target.targetId][sender]['active']:
-                    MessageTaskManager._list[session.target.targetId][sender]['active'] = False
-                    MessageTaskManager._list[session.target.targetId][sender]['flag'].set()
+        if (
+            session.target.targetId in MessageTaskManager._list
+            and sender in MessageTaskManager._list[session.target.targetId]
+            and MessageTaskManager._list[session.target.targetId][sender]['active']
+        ):
+            MessageTaskManager._list[session.target.targetId][sender]['active'] = False
+            MessageTaskManager._list[session.target.targetId][sender]['flag'].set()
 
         MessageTaskManager._list.update(
             {session.target.targetId: {sender: {'flag': flag, 'active': True,
@@ -38,10 +40,14 @@ class MessageTaskManager:
     def check(session: MessageSession):
         for target in MessageTaskManager._list:
             for sender in MessageTaskManager._list[target]:
-                if MessageTaskManager._list[target][sender]['active']:
-                    if datetime.now().timestamp() - MessageTaskManager._list[target][sender]['ts'] > 3600:
-                        MessageTaskManager._list[target][sender]['active'] = False
-                        MessageTaskManager._list[target][sender]['flag'].set()  # no result = cancel
+                if (
+                    MessageTaskManager._list[target][sender]['active']
+                    and datetime.now().timestamp()
+                    - MessageTaskManager._list[target][sender]['ts']
+                    > 3600
+                ):
+                    MessageTaskManager._list[target][sender]['active'] = False
+                    MessageTaskManager._list[target][sender]['flag'].set()  # no result = cancel
         if session.target.targetId in MessageTaskManager._list:
             sender = None
             if session.target.senderId in MessageTaskManager._list[session.target.targetId]:
@@ -62,11 +68,10 @@ class MessageTaskManager:
                                 get_['active'] = False
                                 get_['flag'].set()
                                 break
-                    else:
-                        if get_['reply'] == session.target.replyId:
-                            get_['result'] = session
-                            get_['active'] = False
-                            get_['flag'].set()
+                    elif get_['reply'] == session.target.replyId:
+                        get_['result'] = session
+                        get_['active'] = False
+                        get_['flag'].set()
 
 
 __all__ = ['MessageTaskManager']

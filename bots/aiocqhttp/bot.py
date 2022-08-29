@@ -13,7 +13,7 @@ from core.parser.message import parser
 from core.utils import init, load_prompt, init_async, MessageTaskManager
 from database import BotDBUtil
 
-PrivateAssets.set(os.path.abspath(os.path.dirname(__file__) + '/assets'))
+PrivateAssets.set(os.path.abspath(f'{os.path.dirname(__file__)}/assets'))
 EnableDirtyWordCheck.status = Config('qq_enable_dirty_check')
 Url.disable_mm = not Config('qq_enable_urlmanager')
 init()
@@ -33,20 +33,19 @@ async def _(event: Event):
 
 @bot.on_message('group', 'private')
 async def _(event: Event):
-    if event.detail_type == 'private':
-        if event.sub_type == 'group':
-            return await bot.send(event, '请先添加好友后再进行命令交互。')
-    filter_msg = re.match(r'.*?\[CQ:(?:json|xml).*?].*?|.*?<\?xml.*?>.*?', event.message)
-    if filter_msg:
+    if event.detail_type == 'private' and event.sub_type == 'group':
+        return await bot.send(event, '请先添加好友后再进行命令交互。')
+    if filter_msg := re.match(
+        r'.*?\[CQ:(?:json|xml).*?].*?|.*?<\?xml.*?>.*?', event.message
+    ):
         return
     replyId = None
-    match_reply = re.match(r'^\[CQ:reply,id=(.*?)].*', event.message)
-    if match_reply:
-        replyId = int(match_reply.group(1))
+    if match_reply := re.match(r'^\[CQ:reply,id=(.*?)].*', event.message):
+        replyId = int(match_reply[1])
 
     prefix = None
     if match_at := re.match(r'^\[CQ:at,qq=(.*?)].*', event.message):
-        if match_at.group(1) == qq_account:
+        if match_at[1] == qq_account:
             prefix = ['']
 
     targetId = 'QQ|' + (f'Group|{str(event.group_id)}' if event.detail_type == 'group' else str(event.user_id))
@@ -76,9 +75,8 @@ async def _(event):
     if tiny_id == GuildAccountInfo.tiny_id:
         return
     replyId = None
-    match_reply = re.match(r'^\[CQ:reply,id=(.*?)].*', event.message)
-    if match_reply:
-        replyId = int(match_reply.group(1))
+    if match_reply := re.match(r'^\[CQ:reply,id=(.*?)].*', event.message):
+        replyId = int(match_reply[1])
     targetId = f'QQ|Guild|{str(event.guild_id)}|{str(event.channel_id)}'
     msg = MessageSessionGuild(MsgInfo(targetId=targetId,
                                       senderId=f'QQ|Tiny|{str(event.user_id)}',
@@ -116,7 +114,10 @@ async def _(event: Event):
                                                  senderId=event.operator_id).add_and_check('mute', str(event.duration))
         if result:
             await bot.call_action('set_group_leave', group_id=event.group_id)
-            BotDBUtil.SenderInfo('QQ|' + str(event.operator_id)).edit('isInBlockList', True)
+            BotDBUtil.SenderInfo(f'QQ|{str(event.operator_id)}').edit(
+                'isInBlockList', True
+            )
+
             await bot.call_action('delete_friend', friend_id=event.operator_id)
 
 
@@ -130,7 +131,7 @@ async def _(event: Event):
         await bot.call_action('set_group_leave', group_id=event.group_id)
 """
 
-qq_host = Config("qq_host")
-if qq_host:
+
+if qq_host := Config("qq_host"):
     host, port = qq_host.split(':')
     bot.run(host=host, port=port, debug=False)

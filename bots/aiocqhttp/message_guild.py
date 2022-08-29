@@ -47,8 +47,13 @@ class MessageSession(MS):
             count += 1
         Logger.info(f'[Bot] -> [{self.target.targetId}]: {msg}')
         match_guild = re.match(r'(.*)\|(.*)', self.session.target)
-        send = await bot.call_action('send_guild_channel_msg', guild_id=int(match_guild.group(1)),
-                                     channel_id=int(match_guild.group(2)), message=msg)
+        send = await bot.call_action(
+            'send_guild_channel_msg',
+            guild_id=int(match_guild[1]),
+            channel_id=int(match_guild[2]),
+            message=msg,
+        )
+
 
         return FinishedSession(send['message_id'], [send])
 
@@ -59,29 +64,36 @@ class MessageSession(MS):
 
     async def checkNativePermission(self):
         match_guild = re.match(r'(.*)\|(.*)', self.session.target)
-        get_member_info = await bot.call_action('get_guild_member_profile', guild_id=match_guild.group(1),
-                                                user_id=self.session.sender)
+        get_member_info = await bot.call_action(
+            'get_guild_member_profile',
+            guild_id=match_guild[1],
+            user_id=self.session.sender,
+        )
+
         print(get_member_info)
         for m in get_member_info['roles']:
             if m['role_id'] == "2":
                 return True
-        get_guild_info = await bot.call_action('get_guild_meta_by_guest', guild_id=match_guild.group(1))
-        if get_guild_info['owner_id'] == self.session.sender:
-            return True
-        return False
+        get_guild_info = await bot.call_action(
+            'get_guild_meta_by_guest', guild_id=match_guild[1]
+        )
+
+        return get_guild_info['owner_id'] == self.session.sender
 
     def checkSuperUser(self):
-        return True if self.target.senderInfo.query.isSuperUser else False
+        return bool(self.target.senderInfo.query.isSuperUser)
 
     async def get_text_channel_list(self):
         match_guild = re.match(r'(.*)\|(.*)', self.session.target)
-        get_channels_info = await bot.call_action('get_guild_channel_list', guild_id=match_guild.group(1),
-                                                  no_cache=True)
-        lst = []
-        for m in get_channels_info:
-            if m['channel_type'] == 1:
-                lst.append(f'{m["owner_guild_id"]}|{m["channel_id"]}')
-        return lst
+        get_channels_info = await bot.call_action(
+            'get_guild_channel_list', guild_id=match_guild[1], no_cache=True
+        )
+
+        return [
+            f'{m["owner_guild_id"]}|{m["channel_id"]}'
+            for m in get_channels_info
+            if m['channel_type'] == 1
+        ]
 
     def asDisplay(self):
         return html.unescape(self.session.message.message)

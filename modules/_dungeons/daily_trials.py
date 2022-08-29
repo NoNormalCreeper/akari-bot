@@ -35,11 +35,8 @@ async def get_token_from_playfab(xbox_token: str):
     headers['Content-Length'] = str(len(json.dumps(data)))
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.post(url='https://C839E.playfabapi.com/Client/LoginWithXbox',
-                                data=json.dumps(data)) as resp:
-            if resp.status == 200:
-                return await resp.json()
-            else:
-                return False
+                                        data=json.dumps(data)) as resp:
+            return await resp.json() if resp.status == 200 else False
 
 
 async def get_data_from_minecraft_dungeons_services(gametag: str, xbox_token: str):
@@ -57,11 +54,8 @@ async def get_data_from_minecraft_dungeons_services(gametag: str, xbox_token: st
     headers['Content-Length'] = str(len(json.dumps(data)))
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.post(url='https://api.minecraftservices.com/dungeons/login/',
-                                data=json.dumps(data)) as resp:
-            if resp.status == 200:
-                return await resp.json()
-            else:
-                return False
+                                        data=json.dumps(data)) as resp:
+            return await resp.json() if resp.status == 200 else False
 
 
 async def fetch_daily_trials(gametag: str, xbox_token: str):
@@ -73,10 +67,7 @@ async def fetch_daily_trials(gametag: str, xbox_token: str):
     headers['Content-Length'] = '0'
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url='https://api.minecraftservices.com/trials/game/dungeons/') as resp:
-            if resp.status == 200:
-                return await resp.json()
-            else:
-                return False
+            return await resp.json() if resp.status == 200 else False
 
 
 async def fetch_device_token():
@@ -116,13 +107,14 @@ async def fetch_title_token(msaAuthtoken):
         'Properties': {
             'AuthMethod': 'RPS',
             'DeviceToken': deviceToken,
-            'RpsTicket': 't=' + msaAuthtoken,
+            'RpsTicket': f't={msaAuthtoken}',
             'SiteName': 'user.auth.xboxlive.com',
-            'ProofKey': signer.proof_field
+            'ProofKey': signer.proof_field,
         },
         'RelyingParty': 'http://auth.xboxlive.com',
-        'TokenType': 'JWT'
+        'TokenType': 'JWT',
     }
+
     sig = signer.sign('POST', urlparse('https://title.auth.xboxlive.com/title/authenticate').path,
                       json.dumps(data).encode('utf-8'))
     h = {
@@ -170,11 +162,10 @@ async def fetch_token(access_token, devicetoken):
             "SandboxId": "RETAIL",
         }}
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False),
-                                     headers={'Content-Type': 'application/json'}) as session:
+                                         headers={'Content-Type': 'application/json'}) as session:
         async with session.post(url, data=json.dumps(data)) as resp:
             json_data = await resp.json()
-            auth_token = json_data['Token']
-            return auth_token
+            return json_data['Token']
 
 
 async def login(email, password):
@@ -205,7 +196,7 @@ async def login(email, password):
     url_re = b'urlPost:\\\'([A-Za-z0-9:\?_\-\.&/=]+)'
     ppft_re = b'sFTTag:\\\'.*value="(.*)"/>'
 
-    login_post_url = re.search(url_re, resp).group(1).decode('utf-8')
+    login_post_url = re.search(url_re, resp)[1].decode('utf-8')
     post_data = {
         'login': email,
         'passwd': password,
@@ -225,9 +216,9 @@ async def login(email, password):
     }
 
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False),
-                                     headers={'Connection': 'keep-alive', 'User-Agent': 'python-requests/2.26.0',
-                                              'Content-Type': 'application/x-www-form-urlencoded',
-                                              'Cookie': '; '.join(okcookies)}, ) as session:
+                                         headers={'Connection': 'keep-alive', 'User-Agent': 'python-requests/2.26.0',
+                                                  'Content-Type': 'application/x-www-form-urlencoded',
+                                                  'Cookie': '; '.join(okcookies)}, ) as session:
         async with session.post(login_post_url, data=post_data) as resp:
             if resp.status != 200:
                 raise Exception('Could not post login data')
@@ -246,9 +237,7 @@ async def login(email, password):
             # the access token is included in fragment of the location header
             parsed = urlparse(location)
             fragment = parse_qs(parsed.fragment)
-            access_token = fragment['access_token'][0]
-
-            return access_token
+            return fragment['access_token'][0]
 
 
 web_render = Config('web_render')

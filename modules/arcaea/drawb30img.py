@@ -20,7 +20,7 @@ def makeShadow(image, iterations, border, offset, backgroundColour, shadowColour
                  [shadowLeft, shadowTop,
                   shadowLeft + image.size[0],
                   shadowTop + image.size[1]])
-    for i in range(iterations):
+    for _ in range(iterations):
         shadow = shadow.filter(ImageFilter.BLUR)
     imgLeft = border - min(offset[0], 0)
     imgTop = border - min(offset[1], 0)

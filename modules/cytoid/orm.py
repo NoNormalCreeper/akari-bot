@@ -9,10 +9,13 @@ session = db.session
 engine = db.engine
 
 
+
+
 class CytoidBindInfo(Base):
-    __tablename__ = table_prefix + 'CytoidBindInfo'
+    __tablename__ = f'{table_prefix}CytoidBindInfo'
     targetId = Column(String(512), primary_key=True)
     username = Column(String(512))
 
 
-Session.create()
+
+db.create()

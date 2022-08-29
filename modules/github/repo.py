@@ -9,14 +9,18 @@ from modules.github.utils import time_diff, dirty_check, darkCheck
 async def repo(msg: MessageSession):
     try:
         result = await get_url('https://api.github.com/repos/' + msg.parsed_msg['<name>'], 200, fmt='json')
-        if 'message' in result and result['message'] == 'Not Found':
-            await msg.finish('此仓库不存在，请检查输入。')
-        elif 'message' in result and result['message']:
-            await msg.finish(result['message'])
+        if 'message' in result:
+            if result['message'] == 'Not Found':
+                await msg.finish('此仓库不存在，请检查输入。')
+            elif result['message']:
+                await msg.finish(result['message'])
         rlicense = 'Unknown'
-        if 'license' in result and result['license'] is not None:
-            if 'spdx_id' in result['license']:
-                rlicense = result['license']['spdx_id']
+        if (
+            'license' in result
+            and result['license'] is not None
+            and 'spdx_id' in result['license']
+        ):
+            rlicense = result['license']['spdx_id']
         is_fork = result['fork']
         parent = False
 
@@ -35,11 +39,7 @@ async def repo(msg: MessageSession):
             parent = f' (This is a fork of {parent_name} )'
 
         desc = result['description']
-        if desc is None:
-            desc = ''
-        else:
-            desc = '\n' + result['description']
-
+        desc = '' if desc is None else '\n' + result['description']
         message = f'''{result['full_name']} ({result['id']}){desc}
 
 Language · {result['language']} | Fork · {result['forks_count']} | Star · {result['stargazers_count']} | Watch · {result['watchers_count']}

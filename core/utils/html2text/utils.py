@@ -40,7 +40,7 @@ def dumb_css_parser(data: str) -> Dict[str, Dict[str, str]]:
     data += ";"
     importIndex = data.find("@import")
     while importIndex != -1:
-        data = data[0:importIndex] + data[data.find(";", importIndex) + 1:]
+        data = data[:importIndex] + data[data.find(";", importIndex) + 1:]
         importIndex = data.find("@import")
 
     # parse the css. reverted from dictionary comprehension in order to
@@ -71,8 +71,8 @@ def element_style(
     if "class" in attrs:
         assert attrs["class"] is not None
         for css_class in attrs["class"].split():
-            css_style = style_def.get("." + css_class, {})
-            style.update(css_style)
+            css_style = style_def.get(f".{css_class}", {})
+            style |= css_style
     if "style" in attrs:
         assert attrs["style"] is not None
         immediate_style = dumb_property_dict(attrs["style"])
@@ -135,10 +135,8 @@ def google_fixed_width_font(style: Dict[str, str]) -> bool:
 
     :rtype: bool
     """
-    font_family = ""
-    if "font-family" in style:
-        font_family = style["font-family"]
-    return "courier new" == font_family or "consolas" == font_family
+    font_family = style.get("font-family", "")
+    return font_family in ["courier new", "consolas"]
 
 
 def list_numbering_start(attrs: Dict[str, Optional[str]]) -> int:
@@ -166,19 +164,19 @@ def skipwrap(para: str, wrap_links: bool, wrap_list_items: bool) -> bool:
         return True
     # If the text begins with four spaces or one tab, it's a code block;
     # don't wrap
-    if para[0:4] == "    " or para[0] == "\t":
+    if para.startswith("    ") or para[0] == "\t":
         return True
 
     # If the text begins with only two "--", possibly preceded by
     # whitespace, that's an emdash; so wrap.
     stripped = para.lstrip()
-    if stripped[0:2] == "--" and len(stripped) > 2 and stripped[2] != "-":
+    if stripped.startswith("--") and len(stripped) > 2 and stripped[2] != "-":
         return False
 
     # I'm not sure what this is for; I thought it was to detect lists,
     # but there's a <br>-inside-<span> case in one of the tests that
     # also depends upon it.
-    if stripped[0:1] in ("-", "*") and not stripped[0:2] == "**":
+    if stripped[:1] in ("-", "*") and not stripped.startswith("**"):
         return not wrap_list_items
 
     # If the text begins with a single -, *, or +, followed by a space,
@@ -241,18 +239,11 @@ def reformat_table(lines: List[str], right_margin: int) -> List[str]:
     new_lines = []
     for line in lines:
         cols = [x.rstrip() for x in line.split("|")]
-        if set(line.strip()) == set("-|"):
-            filler = "-"
-            new_cols = [
-                x.rstrip() + (filler * (M - len(x.rstrip())))
-                for x, M in zip(cols, max_width)
-            ]
-        else:
-            filler = " "
-            new_cols = [
-                x.rstrip() + (filler * (M - len(x.rstrip())))
-                for x, M in zip(cols, max_width)
-            ]
+        filler = "-" if set(line.strip()) == set("-|") else " "
+        new_cols = [
+            x.rstrip() + (filler * (M - len(x.rstrip())))
+            for x, M in zip(cols, max_width)
+        ]
         new_lines.append("|".join(new_cols))
     return new_lines
 

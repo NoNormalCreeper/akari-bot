@@ -36,10 +36,7 @@ async def get_info_official(usercode):
     getuserinfo = getuserinfo_json['data']
     username = getuserinfo['display_name']
     potential = getuserinfo['potential']
-    if potential is not None:
-        potential = int(potential) / 100
-    else:
-        potential = '--'
+    potential = int(potential) / 100 if potential is not None else '--'
     recent = getuserinfo["last_played_song"]
     if recent is None:
         return [Plain('此用户无游玩记录。')]
@@ -73,12 +70,14 @@ async def get_info_official(usercode):
     far = recent['far_count']
     lost = recent['lost_count']
     time_played = datetime.fromtimestamp(recent['time_played'] / 1000)
-    result = {'success': True, 'msg': f'{username} (Ptt: {potential})的最近游玩记录：\n'
-                                      f'{trackname} ({difficulty})\n'
-                                      f'Score: {score}\n'
-                                      f'Pure: {pure} ({shiny_pure})\n'
-                                      f'Far: {far}\n'
-                                      f'Lost: {lost}\n'
-                                      f'Potential: {realptt} -> {ptt}\n'
-                                      f'Time: {time_played.strftime("%Y-%m-%d %H:%M:%S")}(UTC+8)'}
-    return result
+    return {
+        'success': True,
+        'msg': f'{username} (Ptt: {potential})的最近游玩记录：\n'
+        f'{trackname} ({difficulty})\n'
+        f'Score: {score}\n'
+        f'Pure: {pure} ({shiny_pure})\n'
+        f'Far: {far}\n'
+        f'Lost: {lost}\n'
+        f'Potential: {realptt} -> {ptt}\n'
+        f'Time: {time_played.strftime("%Y-%m-%d %H:%M:%S")}(UTC+8)',
+    }

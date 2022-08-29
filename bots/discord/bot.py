@@ -13,7 +13,7 @@ from core.logger import Logger
 from core.parser.message import parser
 from core.utils import init, init_async, load_prompt, MessageTaskManager
 
-PrivateAssets.set(os.path.abspath(os.path.dirname(__file__) + '/assets'))
+PrivateAssets.set(os.path.abspath(f'{os.path.dirname(__file__)}/assets'))
 init()
 Url.disable_mm = True
 
@@ -22,7 +22,7 @@ count = 0
 
 @client.event
 async def on_ready():
-    Logger.info('Logged on as ' + str(client.user))
+    Logger.info(f'Logged on as {str(client.user)}')
     global count
     if count == 0:
         await init_async(FetchTarget)
@@ -48,7 +48,7 @@ def load_slashcommands():
                     fun_file = file_name[:-3]
             if fun_file is not None:
                 Logger.info(f'Loading slash.{fun_file}...')
-                modules = 'bots.discord.slash.' + fun_file
+                modules = f'bots.discord.slash.{fun_file}'
                 importlib.import_module(modules)
                 Logger.info(f'Succeeded loaded bots.discord.slash.{fun_file}!')
         except:
@@ -69,12 +69,10 @@ async def on_message(message):
     if isinstance(message.channel, discord.DMChannel):
         target = "Discord|DM|Channel"
     targetId = f"{target}|{message.channel.id}"
-    replyId = None
-    if message.reference is not None:
-        replyId = message.reference.message_id
+    replyId = None if message.reference is None else message.reference.message_id
     prefix = None
     if match_at := re.match(r'^<@(.*?)>', message.content):
-        if match_at.group(1) == str(client.user.id):
+        if match_at[1] == str(client.user.id):
             prefix = ['']
             message.content = re.sub(r'<@(.*?)>', '', message.content)
 
@@ -88,6 +86,5 @@ async def on_message(message):
     await parser(msg, prefix=prefix)
 
 
-dc_token = Config('dc_token')
-if dc_token:
+if dc_token := Config('dc_token'):
     client.run(dc_token)

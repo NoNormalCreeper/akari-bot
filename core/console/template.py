@@ -54,15 +54,10 @@ class Template(MS):
         print(c)
         if msgchain is not None and delete:
             await send.delete()
-        if c in confirm_command:
-            return True
-
-        return False
+        return c in confirm_command
 
     async def waitAnyone(self, msgchain=None, quote=True, delete=True):
-        send = None
-        if msgchain is not None:
-            send = await self.sendMessage(msgchain)
+        send = await self.sendMessage(msgchain) if msgchain is not None else None
         if self.session.auto_interactions is not None:
             c = self.session.auto_interactions[0]
             del self.session.auto_interactions[0]

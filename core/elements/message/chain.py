@@ -66,26 +66,36 @@ class MessageChain:
                         return False
             elif isinstance(v, Embed):
                 for secret in Secret.list:
-                    if v.title is not None:
-                        if v.title.upper().find(secret.upper()) != -1:
-                            Logger.warn(unsafeprompt('Embed.title', secret, v.title))
-                            return False
-                    if v.description is not None:
-                        if v.description.upper().find(secret.upper()) != -1:
-                            Logger.warn(unsafeprompt('Embed.description', secret, v.description))
-                            return False
-                    if v.footer is not None:
-                        if v.footer.upper().find(secret.upper()) != -1:
-                            Logger.warn(unsafeprompt('Embed.footer', secret, v.footer))
-                            return False
-                    if v.author is not None:
-                        if v.author.upper().find(secret.upper()) != -1:
-                            Logger.warn(unsafeprompt('Embed.author', secret, v.author))
-                            return False
-                    if v.url is not None:
-                        if v.url.upper().find(secret.upper()) != -1:
-                            Logger.warn(unsafeprompt('Embed.url', secret, v.url))
-                            return False
+                    if (
+                        v.title is not None
+                        and v.title.upper().find(secret.upper()) != -1
+                    ):
+                        Logger.warn(unsafeprompt('Embed.title', secret, v.title))
+                        return False
+                    if (
+                        v.description is not None
+                        and v.description.upper().find(secret.upper()) != -1
+                    ):
+                        Logger.warn(unsafeprompt('Embed.description', secret, v.description))
+                        return False
+                    if (
+                        v.footer is not None
+                        and v.footer.upper().find(secret.upper()) != -1
+                    ):
+                        Logger.warn(unsafeprompt('Embed.footer', secret, v.footer))
+                        return False
+                    if (
+                        v.author is not None
+                        and v.author.upper().find(secret.upper()) != -1
+                    ):
+                        Logger.warn(unsafeprompt('Embed.author', secret, v.author))
+                        return False
+                    if (
+                        v.url is not None
+                        and v.url.upper().find(secret.upper()) != -1
+                    ):
+                        Logger.warn(unsafeprompt('Embed.url', secret, v.url))
+                        return False
                     for f in v.fields:
                         if f.name.upper().find(secret.upper()) != -1:
                             Logger.warn(unsafeprompt('Embed.field.name', secret, f.name))
@@ -132,44 +142,41 @@ def match_kecode(text: str) -> List[Union[Plain, Image, Voice, Embed]]:
             if e != '':
                 elements.append(Plain(e))
         else:
-            element_type = match.group(1).lower()
-            args = re.split(r',|,.\s', match.group(2))
+            element_type = match[1].lower()
+            args = re.split(r',|,.\s', match[2])
             for x in args:
                 if x == '':
                     args.remove('')
             if element_type == 'plain':
                 for a in args:
-                    ma = re.match(r'(.*?)=(.*)', a)
-                    if ma:
-                        if ma.group(1) == 'text':
-                            elements.append(Plain(ma.group(2)))
+                    if ma := re.match(r'(.*?)=(.*)', a):
+                        if ma[1] == 'text':
+                            elements.append(Plain(ma[2]))
                         else:
                             elements.append(Plain(a))
                     else:
                         elements.append(Plain(a))
             elif element_type == 'image':
                 for a in args:
-                    ma = re.match(r'(.*?)=(.*)', a)
-                    if ma:
+                    if ma := re.match(r'(.*?)=(.*)', a):
                         img = None
-                        if ma.group(1) == 'path':
-                            parse_url = urlparse(ma.group(2))
+                        if ma[1] == 'path':
+                            parse_url = urlparse(ma[2])
                             if parse_url[0] == 'file' or parse_url[1] in site_whitelist:
-                                img = Image(path=ma.group(2))
-                        if ma.group(1) == 'headers':
-                            img.headers = json.loads(str(base64.b64decode(ma.group(2)), "UTF-8"))
+                                img = Image(path=ma[2])
+                        if ma[1] == 'headers':
+                            img.headers = json.loads(str(base64.b64decode(ma[2]), "UTF-8"))
                         if img is not None:
                             elements.append(img)
                     else:
                         elements.append(Image(a))
             elif element_type == 'voice':
                 for a in args:
-                    ma = re.match(r'(.*?)=(.*)', a)
-                    if ma:
-                        if ma.group(1) == 'path':
-                            parse_url = urlparse(ma.group(2))
+                    if ma := re.match(r'(.*?)=(.*)', a):
+                        if ma[1] == 'path':
+                            parse_url = urlparse(ma[2])
                             if parse_url[0] == 'file' or parse_url[1] in site_whitelist:
-                                elements.append(Voice(path=ma.group(2)))
+                                elements.append(Voice(path=ma[2]))
                         else:
                             elements.append(Voice(a))
                     else:

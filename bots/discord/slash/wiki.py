@@ -16,10 +16,10 @@ async def auto_search(ctx: discord.AutocompleteContext):
     iws = target.get_interwikis()
     query_wiki = target.get_start_wiki()
     if match_iw := re.match(r'(.*?):(.*)', title):
-        if match_iw.group(1) in iws:
-            query_wiki = iws[match_iw.group(1)]
-            iw = match_iw.group(1) + ':'
-            title = match_iw.group(2)
+        if match_iw[1] in iws:
+            query_wiki = iws[match_iw[1]]
+            iw = match_iw[1] + ':'
+            title = match_iw[2]
     if query_wiki is None:
         return []
     wiki = WikiLib(query_wiki)
@@ -31,10 +31,7 @@ async def auto_search(ctx: discord.AutocompleteContext):
 
 async def auto_get_custom_iw_list(ctx: discord.AutocompleteContext):
     target = WikiTargetInfo(ctx_to_session(ctx)).get_interwikis()
-    if not target:
-        return []
-    else:
-        return list(target.keys())
+    return list(target.keys()) if target else []
 
 
 async def default_wiki(ctx: discord.AutocompleteContext):

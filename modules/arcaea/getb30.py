@@ -20,7 +20,7 @@ async def getb30(usercode, official=False):
     last5rank = 0
     async with aiohttp.ClientSession() as session:
         url = Config("botarcapi_url")
-        async with session.get(url + f"user/best30?usercode={usercode}&withsonginfo=True", headers=headers) as resp:
+        async with session.get(f"{url}user/best30?usercode={usercode}&withsonginfo=True", headers=headers) as resp:
             if resp.status != 200:
                 return {'text': f'获取失败：{str(resp.status)}[Ke:Image,path=https://http.cat/{str(resp.status)}.jpg]'}
             a = await resp.text()
@@ -53,7 +53,7 @@ async def getb30(usercode, official=False):
                         elif x['difficulty'] == 3:
                             difficulty = 'BYD'
                         trackname = songsinfo[x['song_id'] + str(x['difficulty'])]['name_en']
-                        tracknames[x['song_id'] + difficulty] = trackname + f' ({difficulty})'
+                        tracknames[x['song_id'] + difficulty] = f'{trackname} ({difficulty})'
                         imgpath = f'{assets_path}/b30background_img{"_official" if official else ""}/{x["song_id"]}_{str(x["difficulty"])}.jpg'
                         if not os.path.exists(imgpath):
                             imgpath = f'{assets_path}/b30background_img{"_official" if official else ""}/{x["song_id"]}.jpg'
@@ -99,4 +99,4 @@ async def getb30(usercode, official=False):
             else:
                 if loadjson['status'] in errcode:
                     return {'text': f'查询失败：{errcode[loadjson["status"]]}'}
-                return {'text': '查询失败。' + a}
+                return {'text': f'查询失败。{a}'}

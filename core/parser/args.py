@@ -15,7 +15,7 @@ class Template:
         self.priority = priority
 
     def __str__(self):
-        return 'Template({})'.format(self.args)
+        return f'Template({self.args})'
 
     def __repr__(self):
         return self.__str__()
@@ -26,7 +26,7 @@ class ArgumentPattern(Pattern):
         self.name = name
 
     def __str__(self):
-        return 'ArgumentPattern("{}")'.format(self.name)
+        return f'ArgumentPattern("{self.name}")'
 
     def __repr__(self):
         return self.__str__()
@@ -38,7 +38,7 @@ class OptionalPattern(Pattern):
         self.args = args
 
     def __str__(self):
-        return 'OptionalPattern("{}", {})'.format(self.flag, self.args)
+        return f'OptionalPattern("{self.flag}", {self.args})'
 
     def __repr__(self):
         return self.__str__()
@@ -49,7 +49,7 @@ class DescPattern(Pattern):
         self.text = text
 
     def __str__(self):
-        return 'DescPattern("{}")'.format(self.text)
+        return f'DescPattern("{self.text}")'
 
     def __repr__(self):
         return self.__str__()
@@ -73,7 +73,7 @@ class MatchedResult:
         self.priority = priority
 
     def __str__(self):
-        return 'MatchedResult({}, {})'.format(self.args, self.priority)
+        return f'MatchedResult({self.args}, {self.priority})'
 
     def __repr__(self):
         return self.__str__()
@@ -86,30 +86,23 @@ def split_multi_arguments(lst: list):
         if len(spl) > 1:
             for y in spl:
                 index_y = spl.index(y)
-                mat = re.match(r"\((.*?)\)", y)
-                if mat:
-                    spl1 = mat.group(1).split('|')
+                if mat := re.match(r"\((.*?)\)", y):
+                    spl1 = mat[1].split('|')
                     for s in spl1:
                         cspl = spl.copy()
                         cspl.insert(index_y, s)
                         del cspl[index_y + 1]
                         new_lst.append(''.join(cspl))
+        elif mat := re.match(r"\((.*?)\)", spl[0]):
+            spl1 = mat[1].split('|')
+            new_lst.extend(iter(spl1))
         else:
-            mat = re.match(r"\((.*?)\)", spl[0])
-            if mat:
-                spl1 = mat.group(1).split('|')
-                for s in spl1:
-                    new_lst.append(s)
-            else:
-                new_lst.append(spl[0])
+            new_lst.append(spl[0])
     split_more = False
     for n in new_lst:
         if re.match(r"\((.*?)\)", n):
             split_more = True
-    if split_more:
-        return split_multi_arguments(new_lst)
-    else:
-        return list(set(new_lst))
+    return split_multi_arguments(new_lst) if split_more else list(set(new_lst))
 
 
 def parse_template(argv: List[str]) -> List[Template]:
@@ -118,9 +111,7 @@ def parse_template(argv: List[str]) -> List[Template]:
     for a in argv:
         if isinstance(a, str):
             spl = split_multi_arguments([a])
-            for split in spl:
-                argv_.append(split)
-
+            argv_.extend(iter(spl))
     for a in argv_:
         template = Template([])
         patterns = filter(None, re.split(r'(\[.*?])|(<.*?>)|(\{.*?})| ', a))
@@ -147,9 +138,9 @@ def parse_template(argv: List[str]) -> List[Template]:
                 if not strip_pattern.endswith('}'):
                     raise InvalidTemplatePattern(p)
                 template.args.append(DescPattern(strip_pattern[1:-1]))
+            elif strip_pattern.startswith('<') and not strip_pattern.endswith('>'):
+                raise InvalidTemplatePattern(p)
             else:
-                if strip_pattern.startswith('<') and not strip_pattern.endswith('>'):
-                    raise InvalidTemplatePattern(p)
                 template.args.append(ArgumentPattern(strip_pattern))
         templates.append(template)
     return templates
@@ -179,11 +170,10 @@ def templates_to_str(templates: List[Template], with_desc=False, simplify=True) 
                 has_desc = True
                 sub_arg_text_ = ' '.join(sub_arg_text)
                 sub_arg_text.clear()
-                if simplify:
-                    if last_desc == arg.text:
-                        continue
+                if simplify and last_desc == arg.text:
+                    continue
                 if with_desc:
-                    arg_text.append(sub_arg_text_ + ' - ' + arg.text)
+                    arg_text.append(f'{sub_arg_text_} - {arg.text}')
                 last_desc = arg.text
         if not has_desc:
             arg_text.append(' '.join(sub_arg_text))

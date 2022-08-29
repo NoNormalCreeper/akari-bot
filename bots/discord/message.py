@@ -19,30 +19,31 @@ enable_analytics = Config('enable_analytics')
 
 
 async def convert_embed(embed: Embed):
-    if isinstance(embed, Embed):
-        files = []
-        embeds = discord.Embed(title=embed.title if embed.title is not None else discord.Embed.Empty,
-                               description=embed.description if embed.description is not None else discord.Embed.Empty,
-                               color=embed.color if embed.color is not None else discord.Embed.Empty,
-                               url=embed.url if embed.url is not None else discord.Embed.Empty,
-                               timestamp=datetime.datetime.fromtimestamp(
-                                   embed.timestamp) if embed.timestamp is not None else discord.Embed.Empty, )
-        if embed.image is not None:
-            upload = discord.File(await embed.image.get(), filename="image.png")
-            files.append(upload)
-            embeds.set_image(url="attachment://image.png")
-        if embed.thumbnail is not None:
-            upload = discord.File(await embed.thumbnail.get(), filename="thumbnail.png")
-            files.append(upload)
-            embeds.set_thumbnail(url="attachment://thumbnail.png")
-        if embed.author is not None:
-            embeds.set_author(name=embed.author)
-        if embed.footer is not None:
-            embeds.set_footer(text=embed.footer)
-        if embed.fields is not None:
-            for field in embed.fields:
-                embeds.add_field(name=field.name, value=field.value, inline=field.inline)
-        return embeds, files
+    if not isinstance(embed, Embed):
+        return
+    files = []
+    embeds = discord.Embed(title=embed.title if embed.title is not None else discord.Embed.Empty,
+                           description=embed.description if embed.description is not None else discord.Embed.Empty,
+                           color=embed.color if embed.color is not None else discord.Embed.Empty,
+                           url=embed.url if embed.url is not None else discord.Embed.Empty,
+                           timestamp=datetime.datetime.fromtimestamp(
+                               embed.timestamp) if embed.timestamp is not None else discord.Embed.Empty, )
+    if embed.image is not None:
+        upload = discord.File(await embed.image.get(), filename="image.png")
+        files.append(upload)
+        embeds.set_image(url="attachment://image.png")
+    if embed.thumbnail is not None:
+        upload = discord.File(await embed.thumbnail.get(), filename="thumbnail.png")
+        files.append(upload)
+        embeds.set_thumbnail(url="attachment://thumbnail.png")
+    if embed.author is not None:
+        embeds.set_author(name=embed.author)
+    if embed.footer is not None:
+        embeds.set_footer(text=embed.footer)
+    if embed.fields is not None:
+        for field in embed.fields:
+            embeds.add_field(name=field.name, value=field.value, inline=field.inline)
+    return embeds, files
 
 
 class FinishedSession(FinS):
@@ -97,25 +98,26 @@ class MessageSession(MS):
             if send_:
                 send.append(send_)
             count += 1
-        msgIds = []
-        for x in send:
-            msgIds.append(x.id)
-
+        msgIds = [x.id for x in send]
         return FinishedSession(msgIds, send)
 
     async def checkPermission(self):
-        if self.session.message.channel.permissions_for(self.session.message.author).administrator \
-            or isinstance(self.session.message.channel, discord.DMChannel) \
-            or self.target.senderInfo.query.isSuperUser \
-            or self.target.senderInfo.check_TargetAdmin(self.target.targetId):
-            return True
-        return False
+        return bool(
+            self.session.message.channel.permissions_for(
+                self.session.message.author
+            ).administrator
+            or isinstance(self.session.message.channel, discord.DMChannel)
+            or self.target.senderInfo.query.isSuperUser
+            or self.target.senderInfo.check_TargetAdmin(self.target.targetId)
+        )
 
     async def checkNativePermission(self):
-        if self.session.message.channel.permissions_for(self.session.message.author).administrator \
-            or isinstance(self.session.message.channel, discord.DMChannel):
-            return True
-        return False
+        return bool(
+            self.session.message.channel.permissions_for(
+                self.session.message.author
+            ).administrator
+            or isinstance(self.session.message.channel, discord.DMChannel)
+        )
 
     def asDisplay(self):
         return self.session.message.content
@@ -169,9 +171,10 @@ class FetchTarget(FT):
 
     @staticmethod
     async def fetch_target(targetId) -> Union[FetchedSession, bool]:
-        matchChannel = re.match(r'^(Discord\|(?:DM\||)Channel)\|(.*)', targetId)
-        if matchChannel:
-            return FetchedSession(matchChannel.group(1), matchChannel.group(2))
+        if matchChannel := re.match(
+            r'^(Discord\|(?:DM\||)Channel)\|(.*)', targetId
+        ):
+            return FetchedSession(matchChannel[1], matchChannel[2])
         else:
             return False
 

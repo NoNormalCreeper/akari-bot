@@ -32,9 +32,7 @@ async def image_table_render(table: Union[ImageTable, List[ImageTable]], save_so
         for tbl in table:
             d = []
             for row in tbl.data:
-                cs = []
-                for c in row:
-                    cs.append(re.sub(r'\n', '<br>', escape(c)))
+                cs = [re.sub(r'\n', '<br>', escape(c)) for c in row]
                 d.append(cs)
             w = len(tbl.headers) * 500
             if w > max_width:
@@ -56,10 +54,10 @@ async def image_table_render(table: Union[ImageTable, List[ImageTable]], save_so
             }</style>"""
         html = {'content': tblst + css, 'width': w}
         if save_source:
-            fname = random_cache_path() + '.html'
+            fname = f'{random_cache_path()}.html'
             with open(fname, 'w') as fi:
                 fi.write(tblst + css)
-        picname = random_cache_path() + '.jpg'
+        picname = f'{random_cache_path()}.jpg'
         if os.path.exists(picname):
             os.remove(picname)
         async with aiohttp.ClientSession() as session:

@@ -71,25 +71,26 @@ class MessageSession(MS):
                 send.append(send_)
             count += 1
             first_send = False
-        msgIds = []
-        for x in send:
-            msgIds.append(x.id)
-
+        msgIds = [x.id for x in send]
         return FinishedSession(msgIds, send)
 
     async def checkPermission(self):
-        if self.session.message.channel.permissions_for(self.session.message.author).administrator \
-                or isinstance(self.session.message.channel, discord.DMChannel) \
-                or self.target.senderInfo.query.isSuperUser \
-                or self.target.senderInfo.check_TargetAdmin(self.target.targetId):
-            return True
-        return False
+        return bool(
+            self.session.message.channel.permissions_for(
+                self.session.message.author
+            ).administrator
+            or isinstance(self.session.message.channel, discord.DMChannel)
+            or self.target.senderInfo.query.isSuperUser
+            or self.target.senderInfo.check_TargetAdmin(self.target.targetId)
+        )
 
     async def checkNativePermission(self):
-        if self.session.message.channel.permissions_for(self.session.message.author).administrator \
-                or isinstance(self.session.message.channel, discord.DMChannel):
-            return True
-        return False
+        return bool(
+            self.session.message.channel.permissions_for(
+                self.session.message.author
+            ).administrator
+            or isinstance(self.session.message.channel, discord.DMChannel)
+        )
 
     def asDisplay(self):
         return self.command

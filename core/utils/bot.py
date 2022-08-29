@@ -20,20 +20,18 @@ bot_version = 'v4.0.0'
 def init() -> None:
     """初始化机器人。仅用于bot.py与console.py。"""
     load_modules()
-    version = os.path.abspath(PrivateAssets.path + '/version')
-    write_version = open(version, 'w')
-    try:
-        write_version.write(os.popen('git rev-parse HEAD', 'r').read()[0:6])
-    except Exception as e:
-        write_version.write(bot_version)
-    write_version.close()
-    tag = os.path.abspath(PrivateAssets.path + '/version_tag')
-    write_tag = open(tag, 'w')
-    try:
-        write_tag.write(os.popen('git tag -l', 'r').read().split('\n')[-2])
-    except Exception as e:
-        write_tag.write(bot_version)
-    write_tag.close()
+    version = os.path.abspath(f'{PrivateAssets.path}/version')
+    with open(version, 'w') as write_version:
+        try:
+            write_version.write(os.popen('git rev-parse HEAD', 'r').read()[:6])
+        except Exception as e:
+            write_version.write(bot_version)
+    tag = os.path.abspath(f'{PrivateAssets.path}/version_tag')
+    with open(tag, 'w') as write_tag:
+        try:
+            write_tag.write(os.popen('git tag -l', 'r').read().split('\n')[-2])
+        except Exception as e:
+            write_tag.write(bot_version)
 
 
 async def init_async(ft) -> None:
@@ -53,7 +51,7 @@ async def init_async(ft) -> None:
 
 async def load_secret():
     config_filename = 'config.cfg'
-    config_path = abspath('./config/' + config_filename)
+    config_path = abspath(f'./config/{config_filename}')
     cp = ConfigParser()
     cp.read(config_path)
     section = cp.sections()
@@ -80,8 +78,8 @@ async def load_secret():
 
 
 async def load_prompt(bot) -> None:
-    author_cache = os.path.abspath(PrivateAssets.path + '/cache_restart_author')
-    loader_cache = os.path.abspath(PrivateAssets.path + '/.cache_loader')
+    author_cache = os.path.abspath(f'{PrivateAssets.path}/cache_restart_author')
+    loader_cache = os.path.abspath(f'{PrivateAssets.path}/.cache_loader')
     if os.path.exists(author_cache):
         open_author_cache = open(author_cache, 'r')
         author = json.loads(open_author_cache.read())['ID']

@@ -26,11 +26,7 @@ async def user(msg: MessageSession):
             optional.append('Location · ' + result['location'])
 
         bio = result['bio']
-        if bio is None:
-            bio = ''
-        else:
-            bio = '\n' + result['bio']
-
+        bio = '' if bio is None else '\n' + result['bio']
         optional_text = '\n' + ' | '.join(optional)
         message = f'''{result['login']} aka {result['name']} ({result['id']}){bio}
 

@@ -26,7 +26,7 @@ def load_modules():
                     fun_file = file_name[:-3]
             if fun_file is not None:
                 Logger.info(f'Loading modules.{fun_file}...')
-                modules = 'modules.' + fun_file
+                modules = f'modules.{fun_file}'
                 importlib.import_module(modules)
                 Logger.info(f'Succeeded loaded modules.{fun_file}!')
         except:
@@ -34,14 +34,13 @@ def load_modules():
             errmsg = f'Failed to load modules.{fun_file}: \n{tb}'
             Logger.error(errmsg)
             err_prompt.append(errmsg)
-    loadercache = os.path.abspath(PrivateAssets.path + '/.cache_loader')
-    openloadercache = open(loadercache, 'w')
-    if err_prompt:
-        err_prompt = re.sub(r'  File \"<frozen importlib.*?>\", .*?\n', '', '\n'.join(err_prompt))
-        openloadercache.write(err_prompt)
-    else:
-        openloadercache.write('')
-    openloadercache.close()
+    loadercache = os.path.abspath(f'{PrivateAssets.path}/.cache_loader')
+    with open(loadercache, 'w') as openloadercache:
+        if err_prompt:
+            err_prompt = re.sub(r'  File \"<frozen importlib.*?>\", .*?\n', '', '\n'.join(err_prompt))
+            openloadercache.write(err_prompt)
+        else:
+            openloadercache.write('')
 
 
 class ModulesManager:
@@ -60,19 +59,18 @@ class ModulesManager:
             ModulesManager.modules[bind_prefix].match_list.add(meta)
 
     @staticmethod
-    def return_modules_list_as_dict(targetFrom: str = None) -> \
-        Dict[str, Union[Command, RegexCommand, Schedule, StartUp]]:
-        if targetFrom is not None:
-            returns = {}
-            for m in ModulesManager.modules:
-                if isinstance(ModulesManager.modules[m], (Command, RegexCommand, Schedule, StartUp)):
-                    if targetFrom in ModulesManager.modules[m].exclude_from:
-                        continue
-                    available = ModulesManager.modules[m].available_for
-                    if targetFrom in available or '*' in available:
-                        returns.update({m: ModulesManager.modules[m]})
-            return returns
-        return ModulesManager.modules
+    def return_modules_list_as_dict(targetFrom: str = None) -> Dict[str, Union[Command, RegexCommand, Schedule, StartUp]]:
+        if targetFrom is None:
+            return ModulesManager.modules
+        returns = {}
+        for m in ModulesManager.modules:
+            if isinstance(ModulesManager.modules[m], (Command, RegexCommand, Schedule, StartUp)):
+                if targetFrom in ModulesManager.modules[m].exclude_from:
+                    continue
+                available = ModulesManager.modules[m].available_for
+                if targetFrom in available or '*' in available:
+                    returns[m] = ModulesManager.modules[m]
+        return returns
 
     @staticmethod
     def return_modules_alias_map() -> Dict[str, str]:
@@ -84,7 +82,7 @@ class ModulesManager:
         for m in modules:
             module = modules[m]
             if module.alias is not None:
-                alias_map.update(module.alias)
+                alias_map |= module.alias
         return alias_map
 
     @staticmethod
@@ -93,9 +91,7 @@ class ModulesManager:
         返回此模块的别名列表
         """
         module = ModulesManager.return_modules_list_as_dict()[module_name]
-        if module.alias is None:
-            return {}
-        return module.alias
+        return {} if module.alias is None else module.alias
 
     @staticmethod
     def return_modules_developers_map() -> Dict[str, list]:
@@ -104,24 +100,22 @@ class ModulesManager:
         for m in modules:
             module = modules[m]
             if module.developers is not None:
-                d.update({m: module.developers})
+                d[m] = module.developers
         return d
 
     @staticmethod
     def return_specified_type_modules(module_type: [Command, RegexCommand, Schedule, StartUp],
-                                      targetFrom: str = None) \
-        -> Dict[str, Union[Command, RegexCommand, Schedule, StartUp]]:
+                                      targetFrom: str = None) -> Dict[str, Union[Command, RegexCommand, Schedule, StartUp]]:
         d = {}
         modules = ModulesManager.return_modules_list_as_dict()
         for m in modules:
             module = modules[m]
             if isinstance(module, module_type):
-                if targetFrom is not None:
-                    if isinstance(module, (Command, RegexCommand, Schedule, StartUp)):
-                        if targetFrom in module.exclude_from:
-                            continue
-                        if targetFrom in module.available_for or '*' in module.available_for:
-                            d.update({m: module})
-                else:
-                    d.update({module.bind_prefix: module})
+                if targetFrom is None:
+                    d[module.bind_prefix] = module
+                elif isinstance(module, (Command, RegexCommand, Schedule, StartUp)):
+                    if targetFrom in module.exclude_from:
+                        continue
+                    if targetFrom in module.available_for or '*' in module.available_for:
+                        d[m] = module
         return d

@@ -9,11 +9,9 @@ bug = on_command('bug', alias='b', developers=['OasisAkari'])
 
 @bug.handle('<MojiraID> {查询Mojira上的漏洞编号内容}')
 async def bugtracker(msg: MessageSession):
-    mojira_id = msg.parsed_msg['<MojiraID>']
-    if mojira_id:
-        q = re.match(r'(.*-.*)', mojira_id)
-        if q:
-            result = await bugtracker_get(q.group(1))
+    if mojira_id := msg.parsed_msg['<MojiraID>']:
+        if q := re.match(r'(.*-.*)', mojira_id):
+            result = await bugtracker_get(q[1])
             await msg.finish(result)
 
 
@@ -26,7 +24,7 @@ rbug = on_regex('bug_regex',
 async def regex_bugtracker(msg: MessageSession):
     matched_msg = msg.matched_msg
     if len(matched_msg.group(1)) < 10 and len(matched_msg.group(2)) < 10:
-        result = await bugtracker_get(matched_msg.group(1) + '-' + matched_msg.group(2))
+        result = await bugtracker_get(f'{matched_msg.group(1)}-{matched_msg.group(2)}')
         await msg.finish(result)
 
 

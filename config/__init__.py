@@ -4,7 +4,7 @@ from os.path import abspath
 from core.exceptions import ConfigFileNotFound
 
 config_filename = 'config.cfg'
-config_path = abspath('./config/' + config_filename)
+config_path = abspath(f'./config/{config_filename}')
 
 
 class CFG:
@@ -21,9 +21,7 @@ class CFG:
             return False
         if value.upper() == 'TRUE':
             return True
-        if value.upper() == 'FALSE':
-            return False
-        return value
+        return False if value.upper() == 'FALSE' else value
 
 
 Config = CFG().config

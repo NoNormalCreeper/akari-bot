@@ -14,16 +14,22 @@ i = on_command('idlist')
 async def _(msg: MessageSession):
     query = msg.parsed_msg['<query>']
     query_options = {'q': query, 'limit': '6'}
-    query_url = api + '?' + urllib.parse.urlencode(query_options)
+    query_url = f'{api}?{urllib.parse.urlencode(query_options)}'
     resp = await get_url(query_url, 200, fmt='json')
-    result = resp['data']['result']
-    plain_texts = []
-    if result:
-        for x in result[0:5]:
-            plain_texts.append(f'{x["enumName"]}：{x["key"]} -> {x["value"]}')
+    if result := resp['data']['result']:
+        plain_texts = [
+            f'{x["enumName"]}：{x["key"]} -> {x["value"]}' for x in result[:5]
+        ]
+
         if resp['data']['count'] > 5:
-            plain_texts.append('...仅显示前5条结果，查看更多：')
-            plain_texts.append('https://ca.projectxero.top/idlist/' + resp['data']['hash'])
+            plain_texts.extend(
+                (
+                    '...仅显示前5条结果，查看更多：',
+                    'https://ca.projectxero.top/idlist/'
+                    + resp['data']['hash'],
+                )
+            )
+
         await msg.finish('\n'.join(plain_texts))
     else:
         await msg.finish('没有找到结果。')

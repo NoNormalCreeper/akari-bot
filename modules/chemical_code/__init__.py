@@ -24,25 +24,18 @@ special_id = ["22398", "140526", "4509317", "4509318", "4510681", "4510778", "45
 
 @retry(stop=stop_after_attempt(3), reraise=True)
 async def search_csr(id=None):  # 根据 ChemSpider 的 ID 查询 ChemSpider 的链接，留空（将会使用缺省值 None）则随机查询
-    if id is not None:  # 如果传入了 ID，则使用 ID 查询
-        answer_id = id
-    else:
-        answer_id = random.randint(1, 114974229)  # 否则随机查询一个题目
+    answer_id = id if id is not None else random.randint(1, 114974229)
     answer_id = str(answer_id)
-    Logger.info("ChemSpider ID: " + answer_id)
-    get = await get_url(csr_link + '/Search.aspx?q=' + answer_id, 200, fmt='text')  # 在 ChemSpider 上搜索此化学式或 ID
+    Logger.info(f"ChemSpider ID: {answer_id}")
+    get = await get_url(f'{csr_link}/Search.aspx?q={answer_id}', 200, fmt='text')
     # Logger.info(get)
     soup = BeautifulSoup(get, 'html.parser')  # 解析 HTML
     name = soup.find('span',
                      id='ctl00_ctl00_ContentSection_ContentPlaceHolder1_RecordViewDetails_rptDetailsView_ctl00_prop_MF').text  # 获取化学式名称
     values_ = re.split(r'[A-Za-z]+', name)  # 去除化学式名称中的字母
-    value = 0  # 起始元素记数，忽略单个元素（有无意义不大）
-    for v in values_:  # 遍历剔除字母后的数字
-        if v.isdigit():
-            value += int(v)  # 加一起
+    value = sum(int(v) for v in values_ if v.isdigit())
     wh = 500 * value // 100
-    if wh < 500:
-        wh = 500
+    wh = max(wh, 500)
     return {'id': answer_id, 'name': name,
             'image': f'https://www.chemspider.com/ImagesHandler.ashx?id={answer_id}' +
                      (f"&w={wh}&h={wh}" if answer_id not in special_id else ""), 'length': value}
@@ -67,8 +60,7 @@ async def _(msg: MessageSession):
 
 @cc.handle('stop {停止当前的游戏。}')
 async def s(msg: MessageSession):
-    state = play_state.get(msg.target.targetId, False)  # 尝试获取 play_state 中是否有此对象的游戏状态
-    if state:  # 若有
+    if state := play_state.get(msg.target.targetId, False):
         if state['active']:  # 检查是否为活跃状态
             play_state[msg.target.targetId]['active'] = False  # 标记为非活跃状态
             await msg.sendMessage(f'已停止，正确答案是 {state["answer"]}', quote=False)  # 发送存储于 play_state 中的答案
@@ -116,13 +108,11 @@ async def chemical_code(msg: MessageSession, id=None, captcha_mode=False):  # �
         im = im.convert("RGBA")  # 转换为 RGBA 格式
         image = PILImage.new("RGBA", im.size, 'white')  # 创建新图片
         image.alpha_composite(im, (0, 0))  # 将图片合并到新图片中
-        newpath = random_cache_path() + '.png'  # 创建新文件名
+        newpath = f'{random_cache_path()}.png'
         image.save(newpath)  # 保存新图片
 
     set_timeout = csr['length'] // 30
-    if set_timeout < 2:
-        set_timeout = 2
-
+    set_timeout = max(set_timeout, 2)
     async def ans(msg: MessageSession, answer):  # 定义回答函数的功能
         wait = await msg.waitAnyone()  # 等待对象内的任意人回答
         if play_state[msg.target.targetId]['active']:  # 检查对象是否为活跃状态
